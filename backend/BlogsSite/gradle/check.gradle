@@ -1,0 +1,67 @@
+apply plugin: 'checkstyle'
+apply plugin: 'jacoco'
+
+//Differentiate between the builds of master and the PR builds.
+def branch = System.getProperty("FROM_BRANCH", "main")
+
+//Override the config for pull request analysis
+if (! branch.equalsIgnoreCase('main')) {
+    // For PRA we don't want the build to fail on failures.
+    // We want to be able to collect them and inject them back into the Pull Request.
+    checkstyle {
+        ignoreFailures = true
+    }
+    test {
+        ignoreFailures = true
+    }
+}
+
+checkstyle {
+    configFile = rootProject.file('codequality/checkstyle.xml')
+    sourceSets = [ project.sourceSets.main ]
+    checkstyleMain.exclude '**/Application.*/**'
+    checkstyleMain.exclude '**/model/**'
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        html.enabled true
+        html.destination file("$buildDir/reports/jacoco")
+    }
+
+    afterEvaluate {
+        classDirectories.from = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                    exclude: [
+                            // not significant code to test
+                            '**/model/**',
+                            '**/response/**',
+                            '**/CommonAppValues.*',
+                            '**/constants/**',
+                            '**/configuration/**',
+                            '**/http/**',
+                            '**/Exception/**',
+                            '**/utils/**',
+                            '**/camel/**',
+                            '**/main/**'
+                    ])
+        })
+    }
+}
+
+test {
+    jacoco {
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+        classDumpDir = file("$buildDir/jacoco/classpathdumps")
+    }
+    finalizedBy jacocoTestReport
+}
+
+tasks.withType(Checkstyle) {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+        html.stylesheet = resources.text.fromFile('codequality/checkstyle-noframes-sorted.xsl')
+    }
+}
