@@ -1,6 +1,7 @@
 package com.blogs.controller;
 
 import com.blogs.constants.BlogConstants;
+import com.blogs.exception.ValidationException;
 import com.blogs.model.Blog;
 import com.blogs.service.BlogService;
 import jakarta.validation.Valid;
@@ -8,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,13 +26,10 @@ public class BlogController {
 
     @RequestMapping(method = RequestMethod.POST, path = BlogConstants.SAVE_BLOG,
             consumes = BlogConstants.APPLICATION_JSON, produces = BlogConstants.APPLICATION_JSON)
-    public ResponseEntity<?> saveBlog(@Valid @RequestBody Blog blog, Errors errors) {
+    public ResponseEntity<?> saveBlog(@Valid @RequestBody Blog blog, Errors errors) throws ValidationException {
 
         if (errors.hasErrors()) {
-            String errorsList = errors.getAllErrors().stream()
-                    .map(ObjectError::getDefaultMessage)
-                    .collect(Collectors.joining("\n"));
-            return new ResponseEntity<>(errorsList, HttpStatus.OK);
+            throw new ValidationException(errors);
         }
 
         return new ResponseEntity<>(blogService.saveBlog(blog), HttpStatus.OK);

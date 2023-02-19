@@ -36,15 +36,12 @@ jacocoTestReport {
                     exclude: [
                             // not significant code to test
                             '**/model/**',
-                            '**/response/**',
-                            '**/CommonAppValues.*',
                             '**/constants/**',
                             '**/configuration/**',
-                            '**/http/**',
-                            '**/Exception/**',
-                            '**/utils/**',
-                            '**/camel/**',
-                            '**/main/**'
+                            '**/exception/**',
+                            '**/util/**',
+                            '**/main/**',
+                            '**/controllerAdvice/**'
                     ])
         })
     }

@@ -1,6 +1,7 @@
 package com.blogs.controller;
 
 import com.blogs.constants.BlogConstants;
+import com.blogs.exception.ValidationException;
 import com.blogs.model.Blog;
 import com.blogs.service.BlogService;
 import org.junit.jupiter.api.Test;
@@ -14,12 +15,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class BlogControllerTest {
@@ -35,6 +38,19 @@ public class BlogControllerTest {
         // Setup
         final ResponseEntity<?> expectedResult = new ResponseEntity<>(BlogConstants.DELETE_BLOG_SUCCESS, HttpStatus.OK);
         when(mockBlogService.deleteBlog(0)).thenReturn(true);
+
+        // Run the test
+        final ResponseEntity<?> result = blogController.deleteBlog(0);
+
+        // Verify the results
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void testDeleteBlog_Fail() {
+        // Setup
+        final ResponseEntity<?> expectedResult = new ResponseEntity<>(BlogConstants.NO_BLOG_MESSAGE, HttpStatus.OK);
+        when(mockBlogService.deleteBlog(0)).thenReturn(false);
 
         // Run the test
         final ResponseEntity<?> result = blogController.deleteBlog(0);
@@ -123,7 +139,7 @@ public class BlogControllerTest {
     @Test
     void testGetAllBlogs_BlogServiceReturnsNoItems() {
         // Setup
-        final ResponseEntity<?> expectedResult = new ResponseEntity<>(BlogConstants.NO_BLOG_MESSAGE, HttpStatus.OK);
+        final ResponseEntity<?> expectedResult = new ResponseEntity<>(new ArrayList<Blog>(), HttpStatus.OK);
         when(mockBlogService.getAllBlogs()).thenReturn(Collections.emptyList());
 
         // Run the test
@@ -164,12 +180,12 @@ public class BlogControllerTest {
     }
 
     @Test
-    void testSaveBlog() {
+    void testSaveBlog() throws ValidationException {
         // Setup
         final Blog blog = new Blog(0, "blogTitle", "description", "blogAuthorId", LocalDateTime.of(2020, 1, 1, 0, 0, 0),
                 false);
         final Errors errors = Mockito.mock(Errors.class);
-        final ResponseEntity<?> expectedResult = new ResponseEntity<>(null, HttpStatus.OK);
+        final ResponseEntity<?> expectedResult = new ResponseEntity<>(blog, HttpStatus.OK);
 
         // Configure BlogService.saveBlog(...).
         when(mockBlogService.saveBlog(blog)).thenReturn(blog);
@@ -182,12 +198,41 @@ public class BlogControllerTest {
     }
 
     @Test
+    void testSaveBlog_Error() throws ValidationException {
+        // Setup
+        final Blog blog = new Blog(0, "blogTitle", "description", "", LocalDateTime.of(2020, 1, 1, 0, 0, 0),
+                false);
+        final Errors errors = Mockito.mock(Errors.class);
+
+        // Configure BlogService.saveBlog(...).
+        when(errors.hasErrors()).thenReturn(true);
+
+        // Verify the results
+        assertThrows(ValidationException.class, () -> blogController.saveBlog(blog, errors));
+    }
+
+    @Test
     void testUpdateBlog() {
         // Setup
         final Blog blog = new Blog(0, "blogTitle", "description", "blogAuthorId", LocalDateTime.of(2020, 1, 1, 0, 0, 0),
                 false);
         final ResponseEntity<?> expectedResult = new ResponseEntity<>(BlogConstants.UPDATE_BLOG_SUCCESS, HttpStatus.OK);
         when(mockBlogService.updateBlog(blog)).thenReturn(true);
+
+        // Run the test
+        final ResponseEntity<?> result = blogController.updateBlog(blog);
+
+        // Verify the results
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void testUpdateBlog_Fail() {
+        // Setup
+        final Blog blog = new Blog(0, "blogTitle", "description", "blogAuthorId", LocalDateTime.of(2020, 1, 1, 0, 0, 0),
+                false);
+        final ResponseEntity<?> expectedResult = new ResponseEntity<>(BlogConstants.NO_BLOG_MESSAGE, HttpStatus.OK);
+        when(mockBlogService.updateBlog(blog)).thenReturn(false);
 
         // Run the test
         final ResponseEntity<?> result = blogController.updateBlog(blog);

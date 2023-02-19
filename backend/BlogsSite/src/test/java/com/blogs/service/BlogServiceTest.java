@@ -36,6 +36,18 @@ public class BlogServiceTest {
     }
 
     @Test
+    void testDeleteBlog_Fail() {
+        // Setup
+        when(blogRepo.deleteBlogByBlogId(1)).thenReturn(0);
+
+        // Run the test
+        final boolean result = blogService.deleteBlog(1);
+
+        // Verify the results
+        assertFalse(result);
+    }
+
+    @Test
     void testFindBlogsByBlogAuthorId() {
         // Setup
         final List<Blog> expectedResult = List.of(
@@ -167,7 +179,7 @@ public class BlogServiceTest {
     }
 
     @Test
-    void testUpdateBlog() {
+    void testUpdateBlog_Fail() {
         // Setup
         final Blog blog = new Blog(0, "blogTitle", "description", "blogAuthorId", LocalDateTime.of(2020, 1, 1, 0, 0, 0),
                 false);
@@ -178,5 +190,19 @@ public class BlogServiceTest {
 
         // Verify the results
         assertFalse(result);
+    }
+
+    @Test
+    void testUpdateBlog() {
+        // Setup
+        final Blog blog = new Blog(0, "blogTitle", "description", "blogAuthorId", LocalDateTime.of(2020, 1, 1, 0, 0, 0),
+                false);
+        when(blogRepo.updateBlog("blogTitle", "description", 0)).thenReturn(1);
+
+        // Run the test
+        final Boolean result = blogService.updateBlog(blog);
+
+        // Verify the results
+        assertTrue(result);
     }
 }
